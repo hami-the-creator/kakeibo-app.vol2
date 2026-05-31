@@ -1,0 +1,2127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>家計簿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   Base / Tokens
+========================================================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --bg: #f5f2ee;
+  --card: #ffffff;
+  --surface: #f0ece6;
+  --surface-soft: rgba(255,255,255,0.58);
+  --accent: #c8a96e;
+  --accent-deep: #9f7f34;
+  --accent-dim: rgba(200,169,110,0.12);
+  --text: #2a2520;
+  --muted: #9a9088;
+  --muted2: #c5bdb5;
+  --income: #6a9e7f;
+  --income-dim: rgba(106,158,127,0.1);
+  --expense: #c47a5a;
+  --expense-dim: rgba(196,122,90,0.1);
+  --saving: #6a8fa8;
+  --saving-dim: rgba(106,143,168,0.1);
+  --border: #e8e2da;
+  --checked: #d4c4a8;
+  --radius-sm: 10px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --shadow-soft: 0 6px 18px rgba(42,37,32,0.04);
+  --shadow-card: 0 14px 38px rgba(42,37,32,0.14);
+}
+
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  min-height: 100vh;
+  color: var(--text);
+  padding-bottom: 80px;
+  background:
+    radial-gradient(circle at top right, rgba(200,169,110,0.13), transparent 34%),
+    linear-gradient(180deg, #f8f5f1 0%, var(--bg) 42%, #f1ece5 100%);
+}
+
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.container {
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 0 18px;
+}
+
+.mono,
+.month-display,
+.balance-amount,
+.saving-badge-amount,
+.pill-amount,
+.item-amount,
+.log-entry-amt,
+.log-total-amt,
+.compare-item-val {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* =========================================================
+   Header / Summary
+========================================================= */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0 14px;
+}
+
+.app-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--card);
+  border-radius: 99px;
+  padding: 4px;
+  border: 1.5px solid var(--border);
+}
+
+.nav-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-btn:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.month-display {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  min-width: 70px;
+  text-align: center;
+  color: var(--text);
+}
+
+.summary-card {
+  background: var(--text);
+  border-radius: var(--radius-lg);
+  padding: 22px 22px 18px;
+  margin-bottom: 16px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.summary-card::after {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.03);
+  pointer-events: none;
+}
+
+.summary-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.summary-label-sm,
+.pill-label,
+.saving-badge-label {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  opacity: 0.55;
+  font-family: 'DM Mono', monospace;
+}
+
+.summary-label-sm {
+  margin-bottom: 5px;
+}
+
+.balance-amount {
+  font-family: 'Syne', sans-serif;
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.balance-amount.positive {
+  color: #ffffff;
+}
+
+.balance-amount.negative {
+  color: #f0b89a;
+}
+
+.saving-badge {
+  background: rgba(106,143,168,0.2);
+  border: 1px solid rgba(106,143,168,0.3);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  text-align: right;
+  min-width: 110px;
+}
+
+.saving-badge-label {
+  margin-bottom: 4px;
+}
+
+.saving-badge-amount {
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #a8c8de;
+  white-space: nowrap;
+}
+
+.summary-pills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.pill {
+  min-width: 0;
+  background: rgba(255,255,255,0.07);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.pill-label {
+  margin-bottom: 4px;
+}
+
+.pill-amount {
+  display: block;
+  width: 100%;
+  text-align: right;
+  white-space: nowrap;
+  font-family: 'DM Mono', monospace;
+  font-size: 16px;
+}
+
+.pill-amount.income {
+  color: #a8d4b8;
+}
+
+.pill-amount.expense {
+  color: #f0b89a;
+}
+
+.progress-wrap {
+  background: rgba(255,255,255,0.1);
+  border-radius: 99px;
+  height: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--accent);
+  transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+
+.progress-bar.over {
+  background: #f0b89a;
+}
+
+/* =========================================================
+   Compare / Tabs
+========================================================= */
+.compare-bar {
+  display: none;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  border: 1.5px solid var(--border);
+  box-shadow: 0 8px 22px rgba(42,37,32,0.04);
+}
+
+.compare-title {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+  font-family: 'DM Mono', monospace;
+}
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+}
+
+.compare-item {
+  text-align: center;
+}
+
+.compare-item-label {
+  font-size: 9px;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+
+.compare-item-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tabs-wrap {
+  margin-bottom: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 10px 0 4px;
+  background: linear-gradient(to bottom, var(--bg) 80%, transparent);
+}
+
+.tabs {
+  display: flex;
+  background: var(--card);
+  border-radius: 99px;
+  padding: 4px;
+  border: 1.5px solid var(--border);
+  gap: 2px;
+  box-shadow: 0 8px 22px rgba(42,37,32,0.05);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 9px 6px;
+  border: none;
+  border-radius: 99px;
+  background: transparent;
+  color: var(--muted);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tab-btn.active {
+  background: var(--text);
+  color: white;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(42,37,32,0.2);
+}
+
+.tab-count {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  opacity: 0.55;
+  margin-left: 1px;
+}
+
+/* =========================================================
+   Panels / Items
+========================================================= */
+.panel {
+  display: none;
+}
+
+.panel.active {
+  display: block;
+  animation: fadeIn 0.18s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.item {
+  background: var(--card);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  border: 1.5px solid transparent;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 14px rgba(42,37,32,0.035);
+}
+
+.item:hover {
+  border-color: var(--border);
+}
+
+.item-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 58px;
+  padding: 13px 14px;
+  cursor: pointer;
+}
+
+.item.checked .item-inner {
+  background: #faf8f5;
+}
+
+.checkbox {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.item.checked .checkbox {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.checkmark {
+  width: 9px;
+  height: 6px;
+  border-left: 2px solid white;
+  border-bottom: 2px solid white;
+  transform: rotate(-45deg) translateY(-1px);
+  display: none;
+}
+
+.item.checked .checkmark {
+  display: block;
+}
+
+.item-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.35;
+}
+
+.item.checked .item-name {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--checked);
+}
+
+.item-amount {
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  color: var(--muted);
+  background: rgba(245,242,238,0.7);
+  min-width: 72px;
+  text-align: right;
+  padding: 2px 6px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.item-amount.clickable {
+  cursor: pointer;
+  border-bottom: 1px dashed var(--muted2);
+}
+
+.item-amount.clickable:hover {
+  background: var(--surface);
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
+.item.checked .item-amount {
+  color: var(--muted);
+  border-bottom-color: transparent;
+  pointer-events: none;
+}
+
+.income-amt {
+  color: var(--income);
+}
+
+.saving-amt {
+  color: var(--saving);
+}
+
+.item-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.item-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: none;
+  background: var(--surface);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.item-btn:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.log-btn:hover {
+  color: var(--income);
+  background: var(--income-dim);
+}
+
+.del-btn {
+  background: transparent;
+  color: var(--muted2);
+}
+
+.del-btn:hover {
+  color: var(--expense);
+  background: var(--expense-dim);
+}
+
+
+/* =========================================================
+   Log Panel
+========================================================= */
+.log-panel {
+  display: none;
+  background: linear-gradient(180deg, #f3eee7 0%, #eee7de 100%);
+  border-top: 1px solid var(--border);
+  padding: 14px;
+  animation: fadeIn 0.15s ease;
+}
+
+.item.log-open .log-panel {
+  display: block;
+}
+
+.log-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+  font-family: 'DM Mono', monospace;
+}
+
+.log-title::before {
+  content: "🧾";
+  font-size: 12px;
+}
+
+.log-entries {
+  margin-bottom: 10px;
+}
+
+.log-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.5);
+  border: 1px solid rgba(232,226,218,0.65);
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+
+.log-entry-note {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.log-entry-amt {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--muted);
+  background: rgba(245,242,238,0.8);
+  padding: 3px 7px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.log-entry-del {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(255,255,255,0.6);
+  color: var(--muted2);
+  font-size: 11px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.log-entry-del:hover {
+  color: var(--expense);
+  background: var(--expense-dim);
+}
+
+.log-entry-edit-amt {
+  width: 90px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--text);
+  border: none;
+  border-bottom: 1.5px solid var(--accent);
+  background: transparent;
+  outline: none;
+  text-align: right;
+}
+
+.log-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(232,226,218,0.65);
+  border-radius: 10px;
+  padding: 9px 10px;
+  margin: 10px 0 2px;
+}
+
+.log-total-label {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.log-total-amt {
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.log-add-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 82px 40px 40px 40px;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-soft);
+  border: 1px solid rgba(232,226,218,0.7);
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.log-add-note,
+.log-add-amt {
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+  background: var(--card);
+  color: var(--text);
+  outline: none;
+}
+
+.log-add-note {
+  min-width: 0;
+  width: 100%;
+  padding: 7px 9px;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+
+.log-add-amt {
+  width: 82px;
+  padding: 7px 8px;
+  font-family: 'DM Mono', monospace;
+}
+
+.log-add-note:focus,
+.log-add-amt:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.log-add-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 11px;
+  border: none;
+  background: var(--income);
+  color: white;
+  font-size: 22px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(106,158,127,0.18);
+}
+
+.undo-log-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  color: var(--accent);
+  border: 1.5px solid rgba(200,169,110,0.55);
+  font-size: 18px;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(42,37,32,0.08);
+}
+
+.undo-log-btn:hover {
+  background: var(--accent-dim);
+  color: var(--accent-deep);
+}
+
+.undo-log-btn:disabled {
+  opacity: 0.36;
+  filter: grayscale(0.3);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* =========================================================
+   Add Forms / Empty
+========================================================= */
+.add-section {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 10px;
+  border: 1.5px solid var(--border);
+  margin-top: 10px;
+  box-shadow: var(--shadow-soft);
+}
+
+.add-section:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.add-label {
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  margin-bottom: 8px;
+}
+
+.add-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px 40px;
+  gap: 7px;
+  align-items: center;
+}
+
+.add-input,
+.add-amount {
+  min-width: 0;
+  width: 100%;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  outline: none;
+}
+
+.add-input {
+  padding: 8px 10px;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+
+.add-amount {
+  width: 88px;
+  padding: 8px;
+  font-family: 'DM Mono', monospace;
+}
+
+.add-input:focus,
+.add-amount:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.add-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 11px;
+  background: var(--accent);
+  border: none;
+  color: white;
+  font-size: 23px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 24px 0;
+  color: var(--muted2);
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  background: rgba(255,255,255,0.46);
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  margin-bottom: 8px;
+}
+
+/* =========================================================
+   Modals / Toasts
+========================================================= */
+.confirm-overlay,
+.toast-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(42,37,32,0.45);
+  backdrop-filter: blur(3px);
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 16px 28px;
+}
+
+.confirm-overlay {
+  z-index: 200;
+}
+
+.toast-overlay {
+  z-index: 100;
+}
+
+.confirm-overlay.visible,
+.toast-overlay.visible {
+  display: flex;
+  animation: fadeO 0.2s ease;
+}
+
+@keyframes fadeO {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.confirm-sheet,
+.toast-sheet {
+  width: 100%;
+  max-width: 398px;
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  border: 1.5px solid var(--border);
+  box-shadow: 0 -18px 54px rgba(42,37,32,0.18);
+  animation: slideU 0.28s cubic-bezier(0.4,0,0.2,1);
+}
+
+@keyframes slideU {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.confirm-tag,
+.toast-tag {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+  font-family: 'DM Mono', monospace;
+}
+
+.confirm-title {
+  font-size: 15px;
+  color: var(--text);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.confirm-message {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+
+.confirm-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.confirm-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+.confirm-actions,
+.toast-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.confirm-btn,
+.toast-btn {
+  flex: 1;
+  padding: 11px;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.confirm-btn.primary,
+.toast-btn.primary {
+  background: var(--accent);
+  color: white;
+}
+
+.confirm-btn.secondary,
+.toast-btn.secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1.5px solid var(--border);
+}
+
+.toast-title {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+.toast-title strong {
+  color: var(--text);
+}
+
+.toast-calc {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.toast-calc-left {
+  font-size: 13px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+}
+
+.toast-calc-right {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.toast-btn.close-btn {
+  flex: 0;
+  width: 42px;
+  background: var(--surface);
+  color: var(--muted);
+  border: 1.5px solid var(--border);
+}
+
+.delete-undo-toast {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 22px;
+  z-index: 260;
+  max-width: 398px;
+  margin: 0 auto;
+  background: var(--text);
+  color: white;
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 14px 38px rgba(42,37,32,0.24);
+  display: none;
+  align-items: center;
+  gap: 10px;
+  animation: slideU 0.24s ease;
+}
+
+.delete-undo-toast.visible {
+  display: flex;
+}
+
+.delete-undo-message {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.delete-undo-message strong {
+  color: #f3dba7;
+}
+
+.delete-undo-btn {
+  border: 1.5px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.1);
+  color: white;
+  border-radius: 10px;
+  padding: 9px 11px;
+  font-size: 13px;
+  font-family: 'Noto Sans JP', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   Responsive
+========================================================= */
+@media (max-width: 380px) {
+  .container {
+    padding: 0 12px;
+  }
+
+  .balance-amount {
+    font-size: 33px;
+  }
+
+  .saving-badge {
+    min-width: 100px;
+    padding: 8px 10px;
+  }
+
+  .item-inner {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .item-amount {
+    min-width: 64px;
+    font-size: 13px;
+  }
+
+  .item-btn {
+    width: 30px;
+    height: 30px;
+  }
+
+  .log-add-row {
+    grid-template-columns: minmax(0, 1fr) 76px 38px 38px 38px;
+    gap: 5px;
+  }
+
+  .log-add-amt {
+    width: 76px;
+  }
+
+  .log-add-btn,
+  .undo-log-btn {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+  }
+
+  .add-row {
+    grid-template-columns: minmax(0, 1fr) 78px 38px;
+    gap: 5px;
+  }
+
+  .add-amount {
+    width: 78px;
+  }
+
+  .add-btn {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+  }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <span class="app-title">Kakeibo</span>
+    <div class="month-nav">
+      <button class="nav-btn" onclick="prevMonth()">‹</button>
+      <span class="month-display" id="monthDisplay">2026.04</span>
+      <button class="nav-btn" onclick="nextMonth()">›</button>
+    </div>
+  </div>
+
+  <div class="summary-card">
+    <div class="summary-top">
+      <div>
+        <div class="summary-label-sm">残り</div>
+        <div class="balance-amount positive" id="balance">¥0</div>
+      </div>
+      <div class="saving-badge">
+        <div class="saving-badge-label">貯金合計</div>
+        <div class="saving-badge-amount" id="totalSaving">¥0</div>
+      </div>
+    </div>
+    <div class="summary-pills">
+      <div class="pill"><div class="pill-label">収入</div><div class="pill-amount income" id="totalIncome">¥0</div></div>
+      <div class="pill"><div class="pill-label">支出</div><div class="pill-amount expense" id="totalExpense">¥0</div></div>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+  </div>
+
+  <div class="compare-bar" id="compareBar">
+    <div class="compare-title">先月比</div>
+    <div class="compare-grid">
+      <div class="compare-item"><div class="compare-item-label">収入</div><div class="compare-item-val" id="cmpIncome">—</div></div>
+      <div class="compare-item"><div class="compare-item-label">支出</div><div class="compare-item-val" id="cmpExpense">—</div></div>
+      <div class="compare-item"><div class="compare-item-label">残り</div><div class="compare-item-val" id="cmpBalance">—</div></div>
+    </div>
+  </div>
+
+  <div class="tabs-wrap">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('fixed',this)">固定費<span class="tab-count" id="fixedCount"></span></button>
+      <button class="tab-btn" onclick="switchTab('variable',this)">変動費<span class="tab-count" id="variableCount"></span></button>
+      <button class="tab-btn" onclick="switchTab('income',this)">収入<span class="tab-count" id="incomeCount"></span></button>
+      <button class="tab-btn" onclick="switchTab('saving',this)">貯金<span class="tab-count" id="savingCount"></span></button>
+    </div>
+  </div>
+
+  <div class="panel active" id="panel-fixed">
+    <datalist id="fixedOptions">
+      <option value="家賃"></option><option value="電気・ガス"></option>
+      <option value="Wi-Fi"></option><option value="JCB"></option>
+      <option value="楽天"></option><option value="PayPay"></option>
+      <option value="奨学金"></option><option value="サブスク"></option>
+    </datalist>
+    <div id="fixedList"></div>
+    <div class="add-section">
+      <div class="add-row">
+        <input class="add-input" id="fixedName" placeholder="項目名">
+        <input class="add-amount" id="fixedAmount" placeholder="金額" type="number">
+        <button class="add-btn" onclick="addStandardItem('fixed')">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-variable">
+    <div id="variableList"></div>
+    <div class="add-section">
+      <div class="add-label">カテゴリ追加</div>
+      <div class="add-row">
+        <input class="add-input" id="variableName" placeholder="項目名">
+        <input class="add-amount" id="variableAmount" placeholder="金額" type="number">
+        <button class="add-btn" onclick="addLoggableItem('variable')">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-income">
+    <datalist id="incomeOptions">
+      <option value="基本給"></option><option value="交通費支給"></option>
+      <option value="残業代"></option><option value="ボーナス"></option>
+      <option value="副業"></option><option value="臨時収入"></option>
+    </datalist>
+    <div id="incomeList"></div>
+    <div class="add-section">
+      <div class="add-row">
+        <input class="add-input" id="incomeName" placeholder="項目名">
+        <input class="add-amount" id="incomeAmount" placeholder="金額" type="number">
+        <button class="add-btn" onclick="addStandardItem('income')">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-saving">
+    <datalist id="savingOptions">
+      <option value="積立NISA"></option><option value="iDeCo"></option>
+      <option value="定期預金"></option><option value="緊急予備費"></option>
+      <option value="旅行積立"></option><option value="その他貯金"></option>
+    </datalist>
+    <div id="savingList"></div>
+    <div class="add-section">
+      <div class="add-label">カテゴリ追加</div>
+      <div class="add-row">
+        <input class="add-input" id="savingName" placeholder="項目名">
+        <input class="add-amount" id="savingAmount" placeholder="金額" type="number">
+        <button class="add-btn" onclick="addLoggableItem('saving')">+</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="delete-undo-toast" id="deleteUndoToast">
+  <div class="delete-undo-message" id="deleteUndoMessage">項目を削除しました</div>
+  <button class="delete-undo-btn" onclick="restoreDeletedItem()">元に戻す</button>
+</div>
+
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-sheet">
+    <div class="confirm-tag">確認</div>
+    <div class="confirm-title" id="confirmTitle">本当に実行しますか？</div>
+    <div class="confirm-message" id="confirmMessage">この操作を実行します。</div>
+    <label class="confirm-check">
+      <input type="checkbox" id="confirmDontShow">
+      <span>今後この確認を表示しない</span>
+    </label>
+    <div class="confirm-actions">
+      <button class="confirm-btn secondary" onclick="cancelConfirm()">キャンセル</button>
+      <button class="confirm-btn primary" onclick="runConfirm()">実行する</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-overlay" id="toastOverlay" onclick="closeToast(event)">
+  <div class="toast-sheet">
+    <div class="toast-tag">重複する項目</div>
+    <div class="toast-title" id="toastTitle"></div>
+    <div class="toast-calc">
+      <span class="toast-calc-left" id="toastCalc"></span>
+      <span class="toast-calc-right" id="toastTotal"></span>
+    </div>
+    <div class="toast-actions">
+      <button class="toast-btn primary" id="toastMergeBtn">合算する</button>
+      <button class="toast-btn secondary" id="toastAddBtn">別で追加</button>
+      <button class="toast-btn close-btn" onclick="dismissToast()">✕</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   Data
+========================================================= */
+const STORAGE_KEY = 'kakeibo_refactored_v1';
+const CONFIRM_KEY = 'kakeibo_confirm_settings_v3';
+
+const DEFAULT_FIXED = [
+  { id:1,  name:'家賃',       amount:56000,  checked:false },
+  { id:2,  name:'電気・ガス', amount:4869,   checked:false },
+  { id:3,  name:'Wi-Fi',      amount:0,      checked:false },
+  { id:4,  name:'JCB',        amount:4940,   checked:false },
+  { id:5,  name:'楽天',       amount:91088,  checked:false },
+  { id:6,  name:'PayPay',     amount:45958,  checked:false },
+  { id:7,  name:'奨学金',     amount:11200,  checked:false },
+  { id:18, name:'サブスク',   amount:0,      checked:false },
+];
+
+const DEFAULT_INCOMES = [
+  { id:1, name:'基本給', amount:210000, checked:false },
+  { id:2, name:'交通費', amount:40000,  checked:false },
+  { id:3, name:'TOHO',   amount:88000,  checked:false },
+];
+
+let months = [{
+  year: 2026,
+  month: 4,
+  fixed: JSON.parse(JSON.stringify(DEFAULT_FIXED)),
+  variable: [
+    { id:9,  name:'健康保険',           amount:16000, checked:false, logs:[] },
+    { id:10, name:'食費',               amount:0,     checked:false, logs:[] },
+    { id:11, name:'日用品',             amount:0,     checked:false, logs:[] },
+    { id:12, name:'交通費',             amount:0,     checked:false, logs:[] },
+    { id:13, name:'外食・カフェ',       amount:0,     checked:false, logs:[] },
+    { id:14, name:'美容・コスメ',       amount:0,     checked:false, logs:[] },
+    { id:15, name:'医療・薬',           amount:0,     checked:false, logs:[] },
+    { id:16, name:'被服・ファッション', amount:0,     checked:false, logs:[] },
+    { id:17, name:'娯楽・趣味',         amount:0,     checked:false, logs:[] },
+    { id:19, name:'交際費',             amount:0,     checked:false, logs:[] },
+  ],
+  incomes: JSON.parse(JSON.stringify(DEFAULT_INCOMES)),
+  savings: [],
+}];
+
+let currentMonthIdx = 0;
+let nextId = 100;
+let nextLogId = 1000;
+let logOpenId = null;
+let itemUndoStack = {};
+let itemRedoStack = {};
+let pendingConfirmAction = null;
+let lastDeletedItem = null;
+let deleteUndoTimer = null;
+
+const getData = () => months[currentMonthIdx];
+Object.defineProperty(window, 'data', { get: getData });
+
+function getList(type, month = getData()) {
+  if (type === 'fixed') return month.fixed;
+  if (type === 'variable') return month.variable;
+  if (type === 'income') return month.incomes;
+  if (type === 'saving') return month.savings;
+  return [];
+}
+
+function isLoggableType(type) {
+  return type === 'variable' || type === 'saving';
+}
+
+function findLoggableItem(itemId) {
+  return data.variable.find(i => i.id === itemId)
+      || data.savings.find(i => i.id === itemId);
+}
+
+function fmt(n) {
+  return '¥' + Math.abs(n || 0).toLocaleString();
+}
+
+function resetFocusAndZoom() {
+  if (document.activeElement && typeof document.activeElement.blur === 'function') {
+    document.activeElement.blur();
+  }
+  setTimeout(() => window.scrollTo({ top: window.scrollY, behavior: 'auto' }), 0);
+}
+
+/* =========================================================
+   Storage / Normalize
+========================================================= */
+function normalizeLoggable(list) {
+  list.forEach(item => {
+    if (!item.logs) item.logs = [];
+    if (typeof item.amount !== 'number') item.amount = parseInt(item.amount) || 0;
+  });
+}
+
+function normalizeData() {
+  months.forEach(month => {
+    if (!month.fixed) month.fixed = [];
+    if (!month.variable) month.variable = [];
+    if (!month.incomes) month.incomes = [];
+    if (!month.savings) month.savings = [];
+
+    normalizeLoggable(month.variable);
+    normalizeLoggable(month.savings);
+  });
+}
+
+function saveState() {
+  normalizeData();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    months,
+    currentMonthIdx,
+    nextId,
+    nextLogId,
+    itemUndoStack,
+    itemRedoStack
+  }));
+}
+
+function loadState() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) {
+    normalizeData();
+    return;
+  }
+
+  try {
+    const saved = JSON.parse(raw);
+    if (Array.isArray(saved.months)) months = saved.months;
+    if (Number.isInteger(saved.currentMonthIdx)) currentMonthIdx = saved.currentMonthIdx;
+    if (saved.nextId) nextId = saved.nextId;
+    if (saved.nextLogId) nextLogId = saved.nextLogId;
+    if (saved.itemUndoStack) itemUndoStack = saved.itemUndoStack;
+    if (saved.itemRedoStack) itemRedoStack = saved.itemRedoStack;
+  } catch (error) {
+    console.warn('保存データの読み込みに失敗しました', error);
+  }
+
+  normalizeData();
+}
+
+/* =========================================================
+   Confirmation
+========================================================= */
+function loadConfirmSettings() {
+  try {
+    return JSON.parse(localStorage.getItem(CONFIRM_KEY)) || {};
+  } catch(e) {
+    return {};
+  }
+}
+
+function saveConfirmSetting(actionKey, hide) {
+  const settings = loadConfirmSettings();
+  settings[actionKey] = !!hide;
+  localStorage.setItem(CONFIRM_KEY, JSON.stringify(settings));
+}
+
+function confirmAction(actionKey, title, message, callback) {
+  const needsConfirm = actionKey.startsWith('delete');
+
+  if (!needsConfirm) {
+    callback();
+    return;
+  }
+
+  const settings = loadConfirmSettings();
+  if (settings[actionKey]) {
+    callback();
+    return;
+  }
+
+  pendingConfirmAction = { actionKey, callback };
+  document.getElementById('confirmTitle').textContent = title || '本当に実行しますか？';
+  document.getElementById('confirmMessage').textContent = message || 'この操作を実行します。';
+  document.getElementById('confirmDontShow').checked = false;
+  document.getElementById('confirmOverlay').classList.add('visible');
+}
+
+function cancelConfirm() {
+  pendingConfirmAction = null;
+  document.getElementById('confirmOverlay').classList.remove('visible');
+}
+
+function runConfirm() {
+  if (!pendingConfirmAction) return;
+
+  const hide = document.getElementById('confirmDontShow').checked;
+  if (hide) saveConfirmSetting(pendingConfirmAction.actionKey, true);
+
+  const callback = pendingConfirmAction.callback;
+  pendingConfirmAction = null;
+  document.getElementById('confirmOverlay').classList.remove('visible');
+  callback();
+}
+
+/* =========================================================
+   Undo / Redo for loggable items
+========================================================= */
+function itemKey(itemId) {
+  const d = getData();
+  return `${d.year}-${String(d.month).padStart(2,'0')}-${itemId}`;
+}
+
+function snapshotItem(item) {
+  const key = itemKey(item.id);
+
+  if (!itemUndoStack[key]) itemUndoStack[key] = [];
+  itemUndoStack[key].push(JSON.stringify({
+    amount: item.amount,
+    logs: JSON.parse(JSON.stringify(item.logs || []))
+  }));
+
+  if (itemUndoStack[key].length > 20) itemUndoStack[key].shift();
+
+  itemRedoStack[key] = [];
+}
+
+function canUndoItem(itemId) {
+  const stack = itemUndoStack[itemKey(itemId)];
+  return stack && stack.length > 0;
+}
+
+function canRedoItem(itemId) {
+  const stack = itemRedoStack[itemKey(itemId)];
+  return stack && stack.length > 0;
+}
+
+function undoItem(itemId, e) {
+  e && e.stopPropagation();
+
+  const item = findLoggableItem(itemId);
+  if (!item) return;
+
+  const key = itemKey(itemId);
+  const stack = itemUndoStack[key];
+  if (!stack || stack.length === 0) return;
+
+  if (!itemRedoStack[key]) itemRedoStack[key] = [];
+  itemRedoStack[key].push(JSON.stringify({
+    amount: item.amount,
+    logs: JSON.parse(JSON.stringify(item.logs || []))
+  }));
+
+  const prev = JSON.parse(stack.pop());
+  item.amount = prev.amount || 0;
+  item.logs = prev.logs || [];
+
+  saveState();
+  render();
+}
+
+function redoItem(itemId, e) {
+  e && e.stopPropagation();
+
+  const item = findLoggableItem(itemId);
+  if (!item) return;
+
+  const key = itemKey(itemId);
+  const stack = itemRedoStack[key];
+  if (!stack || stack.length === 0) return;
+
+  if (!itemUndoStack[key]) itemUndoStack[key] = [];
+  itemUndoStack[key].push(JSON.stringify({
+    amount: item.amount,
+    logs: JSON.parse(JSON.stringify(item.logs || []))
+  }));
+
+  const next = JSON.parse(stack.pop());
+  item.amount = next.amount || 0;
+  item.logs = next.logs || [];
+
+  saveState();
+  render();
+}
+
+/* =========================================================
+   Month / Tabs
+========================================================= */
+function updateHeader() {
+  const d = getData();
+  document.getElementById('monthDisplay').textContent =
+    `${d.year}.${String(d.month).padStart(2,'0')}`;
+}
+
+function prevMonth() {
+  if (currentMonthIdx <= 0) return;
+  currentMonthIdx--;
+  logOpenId = null;
+  saveState();
+  updateHeader();
+  updateCompare();
+  render();
+}
+
+function nextMonth() {
+  const cur = getData();
+  let nm = cur.month + 1;
+  let ny = cur.year;
+  if (nm > 12) { nm = 1; ny++; }
+
+  const existingIdx = months.findIndex(m => m.year === ny && m.month === nm);
+
+  if (existingIdx !== -1) {
+    currentMonthIdx = existingIdx;
+  } else {
+    months.push({
+      year: ny,
+      month: nm,
+      fixed: cur.fixed.map(i => ({ ...i, checked:false })),
+      variable: cur.variable.map(i => ({ ...i, amount:0, checked:false, logs:[] })),
+      incomes: cur.incomes.map(i => ({ ...i, checked:false })),
+      savings: cur.savings.map(i => ({ ...i, checked:false, logs:[] })),
+    });
+    currentMonthIdx = months.length - 1;
+  }
+
+  logOpenId = null;
+  saveState();
+  updateHeader();
+  updateCompare();
+  render();
+}
+
+function switchTab(tab, btn) {
+  logOpenId = null;
+
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+}
+
+/* =========================================================
+   Summary
+========================================================= */
+function updateCompare() {
+  const bar = document.getElementById('compareBar');
+
+  if (currentMonthIdx === 0) {
+    bar.style.display = 'none';
+    return;
+  }
+
+  bar.style.display = 'block';
+
+  const calc = d => {
+    const income = d.incomes.reduce((s,i) => s + i.amount, 0);
+    const paidFixed = d.fixed.filter(i => i.checked).reduce((s,i) => s + i.amount, 0);
+    const variable = d.variable.reduce((s,i) => s + i.amount, 0);
+    const paid = paidFixed + variable;
+    return { income, paid, balance: income - paid };
+  };
+
+  const current = calc(getData());
+  const previous = calc(months[currentMonthIdx - 1]);
+
+  const diff = value => {
+    const sign = value >= 0 ? '+' : '−';
+    const color = value >= 0 ? 'var(--income)' : 'var(--expense)';
+    return `<span style="color:${color}">${sign}¥${Math.abs(value).toLocaleString()}</span>`;
+  };
+
+  document.getElementById('cmpIncome').innerHTML  = diff(current.income  - previous.income);
+  document.getElementById('cmpExpense').innerHTML = diff(current.paid    - previous.paid);
+  document.getElementById('cmpBalance').innerHTML = diff(current.balance - previous.balance);
+}
+
+/* =========================================================
+   Loggable item actions: variable / saving
+========================================================= */
+function toggleLog(id, e) {
+  e.stopPropagation();
+  logOpenId = (logOpenId === id) ? null : id;
+  render();
+
+  if (logOpenId === id) {
+    requestAnimationFrame(() => {
+      const el = document.getElementById('log-panel-' + id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+}
+
+function addLog(itemId, e) {
+  e && e.stopPropagation();
+
+  const noteEl = document.getElementById(`log-note-${itemId}`);
+  const amtEl  = document.getElementById(`log-amt-${itemId}`);
+  const note   = noteEl.value.trim();
+  const amount = parseInt(amtEl.value) || 0;
+
+  if (!note && !amount) return;
+
+  const item = findLoggableItem(itemId);
+  if (!item) return;
+
+  snapshotItem(item);
+
+  item.logs.push({
+    id: nextLogId++,
+    note: note || item.name,
+    amount
+  });
+  item.amount = (parseInt(item.amount) || 0) + amount;
+
+  noteEl.value = '';
+  amtEl.value = '';
+  noteEl.blur();
+  amtEl.blur();
+  resetFocusAndZoom();
+
+  saveState();
+  render();
+}
+
+function deleteLog(itemId, logId, e) {
+  e.stopPropagation();
+
+  confirmAction(
+    'deleteLog',
+    '本当に削除しますか？',
+    'この内訳を削除し、合計から金額を差し引きます。',
+    () => {
+      const item = findLoggableItem(itemId);
+      if (!item) return;
+
+      const log = item.logs.find(l => l.id === logId);
+      if (!log) return;
+
+      snapshotItem(item);
+
+      item.logs = item.logs.filter(l => l.id !== logId);
+      item.amount = Math.max(0, (parseInt(item.amount) || 0) - (parseInt(log.amount) || 0));
+
+      saveState();
+      render();
+    }
+  );
+}
+
+function quickEditLogAmount(itemId, logId, e) {
+  e.stopPropagation();
+
+  const item = findLoggableItem(itemId);
+  const log = item && item.logs.find(l => l.id === logId);
+  if (!log) return;
+
+  const el = e.currentTarget;
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.value = log.amount;
+  input.className = 'log-entry-edit-amt';
+
+  el.replaceWith(input);
+  input.focus();
+  input.select();
+
+  const done = () => {
+    const oldAmount = parseInt(log.amount) || 0;
+    const newAmount = parseInt(input.value) || 0;
+
+    if (newAmount === oldAmount) {
+      render();
+      return;
+    }
+
+    snapshotItem(item);
+
+    const diff = newAmount - oldAmount;
+    log.amount = newAmount;
+    item.amount = Math.max(0, (parseInt(item.amount) || 0) + diff);
+
+    saveState();
+    render();
+  };
+
+  input.addEventListener('blur', done);
+  input.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter') input.blur();
+    if (ev.key === 'Escape') render();
+  });
+}
+
+function buildLogPanel(item) {
+  const logs = item.logs || [];
+  const total = logs.reduce((s,l) => s + l.amount, 0);
+
+  const entriesHtml = logs.length === 0
+    ? '<div class="empty-state">まだ内訳がありません</div>'
+    : logs.map(log => `
+        <div class="log-entry">
+          <span class="log-entry-note">${log.note}</span>
+          <span class="log-entry-amt" onclick="quickEditLogAmount(${item.id},${log.id},event)">${fmt(log.amount)}</span>
+          <button class="log-entry-del" onclick="deleteLog(${item.id},${log.id},event)">✕</button>
+        </div>
+      `).join('');
+
+  return `
+    <div class="log-panel" id="log-panel-${item.id}">
+      <div class="log-title">内訳メモ</div>
+      <div class="log-entries">${entriesHtml}</div>
+      ${logs.length > 0 ? `
+        <div class="log-total">
+          <span class="log-total-label">内訳合計</span>
+          <span class="log-total-amt">${fmt(total)}</span>
+        </div>` : ''}
+      <div class="log-add-row" style="margin-top:10px;">
+        <input class="log-add-note" id="log-note-${item.id}" placeholder="メモ（例：スーパー）">
+        <input class="log-add-amt" id="log-amt-${item.id}" placeholder="金額" type="number">
+        <button class="log-add-btn" onclick="addLog(${item.id},event)">+</button>
+        <button class="log-add-btn undo-log-btn"
+                onclick="undoItem(${item.id},event)"
+                title="この項目を元に戻す"
+                ${canUndoItem(item.id) ? '' : 'disabled'}>↶</button>
+        <button class="log-add-btn undo-log-btn"
+                onclick="redoItem(${item.id},event)"
+                title="この項目をやり直す"
+                ${canRedoItem(item.id) ? '' : 'disabled'}>↷</button>
+      </div>
+    </div>
+  `;
+}
+
+/* =========================================================
+   Render
+========================================================= */
+function renderList(listId, list, type) {
+  const el = document.getElementById(listId);
+  el.innerHTML = '';
+
+  if (!list || list.length === 0) {
+    el.innerHTML = '<div class="empty-state">項目を追加してください</div>';
+    return;
+  }
+
+  list.forEach(item => {
+    const isFixed = type === 'fixed';
+    const isIncome = type === 'income';
+    const isSaving = type === 'saving';
+    const isLoggable = isLoggableType(type);
+    const isLogOpen = isLoggable && logOpenId === item.id;
+
+    const card = document.createElement('div');
+    card.className = 'item'
+      + (isFixed && item.checked ? ' checked' : '')
+      + (isLogOpen ? ' log-open' : '');
+
+    const amountClass = 'item-amount'
+      + (isIncome ? ' income-amt clickable' : '')
+      + (isSaving ? ' saving-amt clickable' : '')
+      + (isFixed ? ' clickable' : '')
+      + (isLoggable && !isSaving ? ' clickable' : '');
+
+    const amountClick = `onclick="quickEditAmount(${item.id},'${type}',event)"`;
+
+    const logButton = isLoggable
+      ? `<button class="item-btn log-btn" onclick="toggleLog(${item.id},event)" title="内訳を開く">🧾</button>`
+      : '';
+
+    card.innerHTML = `
+      <div class="item-inner">
+        ${isFixed ? '<div class="checkbox"><div class="checkmark"></div></div>' : ''}
+        <div class="item-name">${item.name}</div>
+        <div class="${amountClass}" ${amountClick}>${item.amount ? fmt(item.amount) : '—'}</div>
+        <div class="item-actions">
+          ${logButton}
+          <button class="item-btn del-btn" onclick="deleteItem('${type}',${item.id},event)" title="削除">✕</button>
+        </div>
+      </div>
+      ${isLoggable ? buildLogPanel(item) : ''}
+    `;
+
+    if (isFixed) {
+      card.querySelector('.item-inner').addEventListener('click', e => {
+        if (e.target.closest('.item-btn') || e.target.closest('.item-amount')) return;
+        item.checked = !item.checked;
+        saveState();
+        render();
+      });
+    }
+
+    el.appendChild(card);
+  });
+}
+
+function render() {
+  const d = getData();
+
+  renderList('fixedList', d.fixed, 'fixed');
+  renderList('variableList', d.variable, 'variable');
+  renderList('incomeList', d.incomes, 'income');
+  renderList('savingList', d.savings, 'saving');
+
+  document.getElementById('fixedCount').textContent    = d.fixed.length ? ` ${d.fixed.length}` : '';
+  document.getElementById('variableCount').textContent = d.variable.length ? ` ${d.variable.length}` : '';
+  document.getElementById('incomeCount').textContent   = d.incomes.length ? ` ${d.incomes.length}` : '';
+  document.getElementById('savingCount').textContent   = d.savings.length ? ` ${d.savings.length}` : '';
+
+  const totalIncome = d.incomes.reduce((s,i) => s + i.amount, 0);
+  const paidFixed = d.fixed.filter(i => i.checked).reduce((s,i) => s + i.amount, 0);
+  const totalVariable = d.variable.reduce((s,i) => s + i.amount, 0);
+  const totalSaving = d.savings.reduce((s,i) => s + i.amount, 0);
+  const totalExpense = paidFixed + totalVariable;
+  const balance = totalIncome - totalExpense;
+
+  document.getElementById('totalIncome').textContent = fmt(totalIncome);
+  document.getElementById('totalExpense').textContent = fmt(totalExpense);
+  document.getElementById('totalSaving').textContent = fmt(totalSaving);
+
+  const balanceEl = document.getElementById('balance');
+  balanceEl.className = 'balance-amount ' + (balance >= 0 ? 'positive' : 'negative');
+  balanceEl.textContent = (balance < 0 ? '−' : '') + fmt(balance);
+
+  const pct = totalIncome > 0 ? Math.max(0, Math.min(100, balance / totalIncome * 100)) : 0;
+  const bar = document.getElementById('progressBar');
+  bar.style.width = pct + '%';
+  bar.className = 'progress-bar' + (pct <= 20 ? ' over' : '');
+
+  updateCompare();
+}
+
+/* =========================================================
+   Add / Edit / Reset / Delete
+========================================================= */
+function quickEditAmount(id, type, e) {
+  e.stopPropagation();
+
+  const item = getList(type).find(i => i.id === id);
+  if (!item || item.checked) return;
+
+  const el = e.currentTarget;
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.value = item.amount;
+  input.style.cssText = 'width:100px;font-family:"DM Mono",monospace;font-size:16px;color:var(--text);border:none;border-bottom:1.5px solid var(--accent);background:transparent;outline:none;text-align:right;';
+
+  el.replaceWith(input);
+  input.focus();
+  input.select();
+
+  const done = () => {
+    const newAmount = parseInt(input.value) || 0;
+
+    if (newAmount === item.amount) {
+      render();
+      return;
+    }
+
+    if (isLoggableType(type)) {
+      snapshotItem(item);
+    }
+
+    item.amount = newAmount;
+    saveState();
+    render();
+  };
+
+  input.addEventListener('blur', done);
+  input.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter') input.blur();
+    if (ev.key === 'Escape') render();
+  });
+}
+
+function addLoggableItem(type) {
+  const nameEl = document.getElementById(type + 'Name');
+  const amountEl = document.getElementById(type + 'Amount');
+  const name = nameEl.value.trim();
+  const amount = parseInt(amountEl.value) || 0;
+
+  if (!name) {
+    nameEl.focus();
+    return;
+  }
+
+  const list = getList(type);
+  const existing = list.find(i => i.name === name);
+
+  if (existing) {
+    if (amount) {
+      snapshotItem(existing);
+      existing.logs.push({
+        id: nextLogId++,
+        note: name,
+        amount
+      });
+      existing.amount = (parseInt(existing.amount) || 0) + amount;
+    }
+
+    logOpenId = existing.id;
+  } else {
+    const newItem = {
+      id: nextId++,
+      name,
+      amount,
+      checked: false,
+      logs: []
+    };
+
+    if (amount) {
+      newItem.logs.push({
+        id: nextLogId++,
+        note: name,
+        amount
+      });
+    }
+
+    list.push(newItem);
+    logOpenId = newItem.id;
+  }
+
+  nameEl.value = '';
+  amountEl.value = '';
+  nameEl.blur();
+  amountEl.blur();
+  resetFocusAndZoom();
+
+  saveState();
+  render();
+}
+
+function addStandardItem(type) {
+  const nameEl = document.getElementById(type + 'Name');
+  const amountEl = document.getElementById(type + 'Amount');
+  const name = nameEl.value.trim();
+  const amount = parseInt(amountEl.value) || 0;
+
+  if (!name) {
+    nameEl.focus();
+    return;
+  }
+
+  const list = getList(type);
+  const existing = list.find(i => i.name === name);
+
+  if (existing) {
+    showMergeToast(existing, amount, type);
+  } else {
+    list.push({ id: nextId++, name, amount, checked:false });
+    saveState();
+    render();
+  }
+
+  nameEl.value = '';
+  amountEl.value = '';
+  nameEl.blur();
+  amountEl.blur();
+  resetFocusAndZoom();
+}
+
+function deleteItem(type, id, e) {
+  e.stopPropagation();
+
+  confirmAction(
+    'deleteItem',
+    '本当に削除しますか？',
+    'この項目を削除します。内訳がある場合は内訳も一緒に削除されます。',
+    () => {
+      const list = getList(type);
+      const index = list.findIndex(i => i.id === id);
+      if (index === -1) return;
+
+      const deletedItem = JSON.parse(JSON.stringify(list[index]));
+      list.splice(index, 1);
+
+      if (logOpenId === id) logOpenId = null;
+      delete itemUndoStack[itemKey(id)];
+      delete itemRedoStack[itemKey(id)];
+
+      showDeleteUndoToast({
+        type,
+        item: deletedItem,
+        index,
+        monthIdx: currentMonthIdx
+      });
+
+      saveState();
+      render();
+    }
+  );
+}
+
+/* =========================================================
+   Merge / Delete Undo
+========================================================= */
+function showMergeToast(existing, addAmount, type) {
+  const newTotal = existing.amount + addAmount;
+
+  document.getElementById('toastTitle').innerHTML = `「<strong>${existing.name}</strong>」が既に存在します`;
+  document.getElementById('toastCalc').textContent = `${fmt(existing.amount)} + ${fmt(addAmount)}`;
+  document.getElementById('toastTotal').textContent = fmt(newTotal);
+
+  document.getElementById('toastMergeBtn').onclick = () => {
+    existing.amount += addAmount;
+    dismissToast();
+    saveState();
+    render();
+  };
+
+  document.getElementById('toastAddBtn').onclick = () => {
+    const list = getList(type);
+    list.push({ id: nextId++, name: existing.name, amount: addAmount, checked:false });
+    dismissToast();
+    saveState();
+    render();
+  };
+
+  document.getElementById('toastOverlay').classList.add('visible');
+}
+
+function closeToast(e) {
+  if (e.target.id === 'toastOverlay') dismissToast();
+}
+
+function dismissToast() {
+  document.getElementById('toastOverlay').classList.remove('visible');
+}
+
+function showDeleteUndoToast(deleted) {
+  lastDeletedItem = deleted;
+
+  const toast = document.getElementById('deleteUndoToast');
+  const message = document.getElementById('deleteUndoMessage');
+  if (!toast || !message) return;
+
+  message.innerHTML = `「<strong>${deleted.item.name}</strong>」を削除しました`;
+  toast.classList.add('visible');
+
+  if (deleteUndoTimer) clearTimeout(deleteUndoTimer);
+  deleteUndoTimer = setTimeout(() => {
+    toast.classList.remove('visible');
+  }, 7000);
+}
+
+function restoreDeletedItem() {
+  if (!lastDeletedItem) return;
+
+  const { type, item, index, monthIdx } = lastDeletedItem;
+  const targetMonth = months[monthIdx];
+  if (!targetMonth) return;
+
+  const list = getList(type, targetMonth);
+  const restored = JSON.parse(JSON.stringify(item));
+  const insertIndex = Math.max(0, Math.min(index, list.length));
+
+  list.splice(insertIndex, 0, restored);
+
+  const toast = document.getElementById('deleteUndoToast');
+  if (toast) toast.classList.remove('visible');
+  if (deleteUndoTimer) clearTimeout(deleteUndoTimer);
+
+  lastDeletedItem = null;
+  currentMonthIdx = monthIdx;
+  logOpenId = null;
+
+  saveState();
+  updateHeader();
+  updateCompare();
+  render();
+}
+
+/* =========================================================
+   Keyboard / Init
+========================================================= */
+['fixed','income'].forEach(type => {
+  const input = document.getElementById(type + 'Amount');
+  if (input) {
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') addStandardItem(type);
+    });
+  }
+});
+
+['variable','saving'].forEach(type => {
+  [type + 'Name', type + 'Amount'].forEach(id => {
+    const input = document.getElementById(id);
+    if (input) {
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') addLoggableItem(type);
+      });
+    }
+  });
+});
+
+loadState();
+updateHeader();
+updateCompare();
+render();
+</script>
+</body>
+</html>
