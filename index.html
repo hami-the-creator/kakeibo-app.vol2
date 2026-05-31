@@ -1133,10 +1133,10 @@ input[type="number"] {
 
   <div class="panel active" id="panel-fixed">
     <datalist id="fixedOptions">
-      <option value="家賃"></option><option value="電気・ガス"></option>
-      <option value="Wi-Fi"></option><option value="JCB"></option>
-      <option value="楽天"></option><option value="PayPay"></option>
-      <option value="奨学金"></option><option value="サブスク"></option>
+      <option value="家賃"></option><option value="水道代"></option>
+      <option value="電気代"></option><option value="ガス代"></option>
+      <option value="通信費"></option><option value="保険料"></option>
+      <option value="サブスク"></option><option value="ローン"></option>
     </datalist>
     <div id="fixedList"></div>
     <div class="add-section">
@@ -1162,9 +1162,9 @@ input[type="number"] {
 
   <div class="panel" id="panel-income">
     <datalist id="incomeOptions">
-      <option value="基本給"></option><option value="交通費支給"></option>
-      <option value="残業代"></option><option value="ボーナス"></option>
-      <option value="副業"></option><option value="臨時収入"></option>
+      <option value="給与"></option><option value="副業"></option>
+      <option value="臨時収入"></option><option value="ボーナス"></option>
+      <option value="手当"></option>
     </datalist>
     <div id="incomeList"></div>
     <div class="add-section">
@@ -1178,9 +1178,9 @@ input[type="number"] {
 
   <div class="panel" id="panel-saving">
     <datalist id="savingOptions">
-      <option value="積立NISA"></option><option value="iDeCo"></option>
-      <option value="定期預金"></option><option value="緊急予備費"></option>
-      <option value="旅行積立"></option><option value="その他貯金"></option>
+      <option value="貯金"></option><option value="緊急予備費"></option>
+      <option value="旅行積立"></option><option value="教育資金"></option>
+      <option value="投資"></option><option value="その他貯金"></option>
     </datalist>
     <div id="savingList"></div>
     <div class="add-section">
@@ -1236,24 +1236,23 @@ input[type="number"] {
 /* =========================================================
    Data
 ========================================================= */
-const STORAGE_KEY = 'kakeibo_refactored_v1';
+const STORAGE_KEY = 'kakeibo_general_v1';
 const CONFIRM_KEY = 'kakeibo_confirm_settings_v3';
 
 const DEFAULT_FIXED = [
-  { id:1,  name:'家賃',       amount:56000,  checked:false },
-  { id:2,  name:'電気・ガス', amount:4869,   checked:false },
-  { id:3,  name:'Wi-Fi',      amount:0,      checked:false },
-  { id:4,  name:'JCB',        amount:4940,   checked:false },
-  { id:5,  name:'楽天',       amount:91088,  checked:false },
-  { id:6,  name:'PayPay',     amount:45958,  checked:false },
-  { id:7,  name:'奨学金',     amount:11200,  checked:false },
-  { id:18, name:'サブスク',   amount:0,      checked:false },
+  { id:1, name:'家賃', amount:0, checked:false },
+  { id:2, name:'水道代', amount:0, checked:false },
+  { id:3, name:'電気代', amount:0, checked:false },
+  { id:4, name:'ガス代', amount:0, checked:false },
+  { id:5, name:'通信費', amount:0, checked:false },
+  { id:6, name:'保険料', amount:0, checked:false },
+  { id:7, name:'サブスク', amount:0, checked:false },
 ];
 
 const DEFAULT_INCOMES = [
-  { id:1, name:'基本給', amount:210000, checked:false },
-  { id:2, name:'交通費', amount:40000,  checked:false },
-  { id:3, name:'TOHO',   amount:88000,  checked:false },
+  { id:1, name:'給与', amount:0, checked:false },
+  { id:2, name:'副業', amount:0, checked:false },
+  { id:3, name:'臨時収入', amount:0, checked:false },
 ];
 
 let months = [{
@@ -1261,19 +1260,21 @@ let months = [{
   month: 4,
   fixed: JSON.parse(JSON.stringify(DEFAULT_FIXED)),
   variable: [
-    { id:9,  name:'健康保険',           amount:16000, checked:false, logs:[] },
-    { id:10, name:'食費',               amount:0,     checked:false, logs:[] },
-    { id:11, name:'日用品',             amount:0,     checked:false, logs:[] },
-    { id:12, name:'交通費',             amount:0,     checked:false, logs:[] },
-    { id:13, name:'外食・カフェ',       amount:0,     checked:false, logs:[] },
-    { id:14, name:'美容・コスメ',       amount:0,     checked:false, logs:[] },
-    { id:15, name:'医療・薬',           amount:0,     checked:false, logs:[] },
-    { id:16, name:'被服・ファッション', amount:0,     checked:false, logs:[] },
-    { id:17, name:'娯楽・趣味',         amount:0,     checked:false, logs:[] },
-    { id:19, name:'交際費',             amount:0,     checked:false, logs:[] },
+    { id:9,  name:'食費', amount:0, checked:false, logs:[] },
+    { id:10, name:'日用品', amount:0, checked:false, logs:[] },
+    { id:11, name:'交通費', amount:0, checked:false, logs:[] },
+    { id:12, name:'外食', amount:0, checked:false, logs:[] },
+    { id:13, name:'美容', amount:0, checked:false, logs:[] },
+    { id:14, name:'医療', amount:0, checked:false, logs:[] },
+    { id:15, name:'衣服', amount:0, checked:false, logs:[] },
+    { id:16, name:'趣味', amount:0, checked:false, logs:[] },
+    { id:17, name:'交際費', amount:0, checked:false, logs:[] },
+    { id:18, name:'その他', amount:0, checked:false, logs:[] },
   ],
   incomes: JSON.parse(JSON.stringify(DEFAULT_INCOMES)),
-  savings: [],
+  savings: [
+    { id:19, name:'貯金', amount:0, checked:false, logs:[] },
+  ],
 }];
 
 let currentMonthIdx = 0;
